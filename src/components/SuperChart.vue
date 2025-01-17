@@ -1,20 +1,15 @@
 <template>
-  <Echarts
-    ref="echartRef"
-    :echartOptions="options"
-    :width="width"
-    :height="height"
-  />
+  <SuperChartCore ref="superChartCoreRef" :width="width" :height="height" />
 </template>
 
 <script lang="ts">
 import { defineComponent, onMounted, ref } from 'vue'
-import Echarts from './Echarts.vue'
-import transformProps from './Chart/src/Waterfall/transformProps'
+import SuperChartCore from './SuperChartCore.vue'
 import { defaultTheme } from '../utils/index'
+import getChartTransformPropsRegistry from '@superset-ui/core/esm/chart/registries/ChartTransformPropsRegistrySingleton'
 
 export default defineComponent({
-  name: 'EchartsWaterfall',
+  name: 'SuperChart',
   props: {
     chartType: {
       type: String,
@@ -38,9 +33,10 @@ export default defineComponent({
     }
   },
   components: {
-    Echarts
+    SuperChartCore
   },
   setup(props) {
+    const superChartCoreRef = ref(null) as any
     const options = ref({})
     const theme = defaultTheme
     const config = {
@@ -64,7 +60,7 @@ export default defineComponent({
       emitCrossFilters: false,
       theme
     } as any
-    const getChart = () => {
+    const getChart = async () => {
       const { chartType, formData, queriesData, height, width } = props
       const chartProps = createChartProps({
         formData,
@@ -73,18 +69,11 @@ export default defineComponent({
         width,
         theme
       })
-      const { echartOptions } = transformProps(chartProps)
-      options.value = echartOptions
-
-      console.log(
-        1112211,
-        'chartType:',
-        chartType,
-        'chartProps:',
-        chartProps,
-        'echartOptions:',
-        echartOptions
-      )
+      const transformProps =
+        await getChartTransformPropsRegistry().getAsPromise(chartType)
+      options.value = transformProps(chartProps)?.echartOptions
+      if (superChartCoreRef.value)
+        superChartCoreRef.value?.getChart(options.value)
     }
     const createChartProps = (rep: any) => {
       config.formData = rep.formData
@@ -99,6 +88,8 @@ export default defineComponent({
       getChart()
     })
     return {
+      superChartCoreRef,
+      props,
       options
     }
   }

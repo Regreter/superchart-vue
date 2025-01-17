@@ -11,6 +11,7 @@
   "dependencies": {
     "@superset-ui/chart-controls": "^0.20.3",
     "@superset-ui/core": "^0.20.4",
+    "@superset-ui/plugin-chart-echarts": "^0.20.3",
     "antd-v5": "^5.14.1",
     "echarts": "^5.6.0",
     "json-bigint": "^1.0.0",

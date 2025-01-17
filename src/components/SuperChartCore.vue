@@ -1,0 +1,41 @@
+<template>
+  <div
+    ref="chartRef"
+    :style="{ width: width + 'px', height: height + 'px' }"
+  ></div>
+</template>
+
+<script lang="ts">
+import { defineComponent, ref } from 'vue'
+import * as echarts from 'echarts'
+
+export default defineComponent({
+  name: 'SuperChartCore',
+  props: {
+    height: {
+      type: Number,
+      required: true
+    },
+    width: {
+      type: Number,
+      required: true
+    }
+  },
+  setup() {
+    const chartRef = ref<HTMLDivElement | null>(null)
+    let chartInstance = null as echarts.ECharts | null
+    const getChart = (options) => {
+      chartInstance = echarts.init(chartRef.value)
+      chartInstance.setOption(JSON.parse(JSON.stringify(options)))
+    }
+    return {
+      chartRef,
+      getChart
+    }
+  }
+})
+</script>
+
+<style scoped>
+/* 这里可以添加组件的样式 */
+</style>

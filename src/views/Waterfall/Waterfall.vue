@@ -12,9 +12,16 @@
 import { defineComponent, reactive, toRefs } from 'vue'
 import data from './data'
 import SuperChart from '../../components/SuperChart.vue'
+import { getChartTransformPropsRegistry } from '@superset-ui/core'
+import { WaterfallTransformProps } from '@superset-ui/plugin-chart-echarts'
+
+getChartTransformPropsRegistry().registerValue(
+  'echarts-waterfall',
+  WaterfallTransformProps
+)
 
 export default defineComponent({
-  name: 'EchartsDemo',
+  name: 'Waterfall',
   components: {
     SuperChart
   },
