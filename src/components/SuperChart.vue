@@ -3,7 +3,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, ref } from 'vue'
+import { defineComponent, ref, watch } from 'vue'
 import SuperChartCore from './SuperChartCore.vue'
 import { defaultTheme } from '../utils/index'
 import {
@@ -41,11 +41,17 @@ export default defineComponent({
   },
   setup(props) {
     const superChartCoreRef = ref(null) as any
-    const options = ref({})
     const theme = defaultTheme
 
     const getChart = async () => {
       const { chartType, formData, queriesData, height, width } = props
+
+      if (
+        !chartType ||
+        Object.keys(formData).length === 0 ||
+        queriesData.length === 0
+      )
+        return
       const chartProps = createChartProps({
         formData,
         queriesData,
@@ -55,11 +61,11 @@ export default defineComponent({
       })
       const transformProps =
         await getChartTransformPropsRegistry().getAsPromise(chartType)
-      options.value = transformProps(
-        JSON.parse(JSON.stringify(chartProps))
-      )?.echartOptions
-      if (superChartCoreRef.value)
-        superChartCoreRef.value?.getChart(options.value)
+      const { echartOptions } = transformProps(chartProps)
+      console.log('echartOptions:', echartOptions)
+
+      if (superChartCoreRef.value && echartOptions)
+        superChartCoreRef.value?.getChart(echartOptions)
     }
 
     const createChartProps = (config: any) => {
@@ -108,13 +114,16 @@ export default defineComponent({
       return config
     }
 
-    onMounted(() => {
-      getChart()
-    })
+    watch(
+      () => [props.chartType, props.formData, props.queriesData],
+      () => {
+        getChart()
+      }
+    )
+
     return {
       superChartCoreRef,
-      props,
-      options
+      props
     }
   }
 })

@@ -24,7 +24,7 @@ export default defineComponent({
   setup() {
     const chartRef = ref<HTMLDivElement | null>(null)
     let chartInstance = null as echarts.ECharts | null
-    const getChart = (options) => {
+    const getChart = (options: any) => {
       chartInstance = echarts.init(chartRef.value)
       chartInstance.setOption(JSON.parse(JSON.stringify(options)))
     }
