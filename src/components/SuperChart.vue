@@ -79,7 +79,7 @@ export default defineComponent({
         legendState,
         initialValues = {},
         queriesData = [],
-        behaviors = [],
+        behaviors = ['INTERACTIVE_CHART'],
         displaySettings = {},
         width = DEFAULT_WIDTH,
         height = DEFAULT_HEIGHT,
