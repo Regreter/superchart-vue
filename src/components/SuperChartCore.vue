@@ -1,8 +1,5 @@
 <template>
-  <div
-    ref="chartRef"
-    :style="{ width: width + 'px', height: height + 'px' }"
-  ></div>
+  <div ref="chartRef" :style="{ width: width, height: height }"></div>
 </template>
 
 <script lang="ts">
@@ -13,11 +10,11 @@ export default defineComponent({
   name: 'SuperChartCore',
   props: {
     height: {
-      type: Number,
+      type: String,
       required: true
     },
     width: {
-      type: Number,
+      type: String,
       required: true
     }
   },
@@ -25,7 +22,7 @@ export default defineComponent({
     const chartRef = ref<HTMLDivElement | null>(null)
     let chartInstance = null as echarts.ECharts | null
     const getChart = (options: any) => {
-      chartInstance = echarts.init(chartRef.value)
+      chartInstance = echarts.init(chartRef.value, 'dark')
       chartInstance.setOption(JSON.parse(JSON.stringify(options)))
     }
     return {

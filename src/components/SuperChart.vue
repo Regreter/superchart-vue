@@ -20,11 +20,11 @@ export default defineComponent({
       required: true
     },
     height: {
-      type: Number,
+      type: String,
       required: true
     },
     width: {
-      type: Number,
+      type: String,
       required: true
     },
     queriesData: {

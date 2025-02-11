@@ -1,15 +1,28 @@
 <template>
-  <SuperChart
-    :chartType="chartType"
-    :width="width"
-    :height="height"
-    :queriesData="queriesData"
-    :formData="formData"
-  />
+  <div class="grid-stack">
+    <div
+      gs-w="6"
+      gs-h="4"
+      class="grid-stack-item"
+      v-for="(item, index) in items"
+      :key="index"
+    >
+      <div class="grid-stack-item-content">
+        <SuperChart
+          :id="'chart-' + index"
+          :chartType="chartType"
+          :width="width"
+          :height="height"
+          :queriesData="queriesData"
+          :formData="formData"
+        />
+      </div>
+    </div>
+  </div>
 </template> 
 
 <script lang="ts">
-import { defineComponent, onMounted, reactive, toRefs } from 'vue'
+import { defineComponent, onMounted, reactive, toRefs, ref } from 'vue'
 import SuperChart from '../../components/SuperChart.vue'
 import {
   BigNumberChartPlugin,
@@ -41,6 +54,8 @@ import {
 import { DEFAULT_HEIGHT, DEFAULT_WIDTH } from '../../utils/content'
 import getChartDataRequest from '../../utils/chartAction'
 import { SupersetClient } from '@superset-ui/core'
+import { GridStack } from 'gridstack'
+import * as echarts from 'echarts'
 
 new EchartsBoxPlotChartPlugin().configure({ key: 'box_plot' }).register()
 new EchartsTimeseriesChartPlugin()
@@ -101,11 +116,11 @@ export default defineComponent({
   },
   props: {
     width: {
-      type: Number,
+      type: String,
       default: DEFAULT_WIDTH
     },
     height: {
-      type: Number,
+      type: String,
       default: DEFAULT_HEIGHT
     }
   },
@@ -128,6 +143,26 @@ export default defineComponent({
       .catch((error) =>
         console.error('Error initializing SupersetClient:', error)
       )
+
+    const grid = ref(null as GridStack | null)
+    const items = ref([{ x: 0, y: 0, w: 6, h: 4 }])
+    const initGrid = () => {
+      grid.value = GridStack.init({
+        float: true,
+        margin: 5,
+        draggable: { handle: '.grid-stack-item-content' }
+      })
+      grid.value?.on('resizestop', (event, el) => {
+        const chartId = el.querySelector('.grid-stack-item-content > div')?.id
+        if (chartId) {
+          const element = document.getElementById(chartId)
+          if (element) {
+            const chart = echarts.getInstanceByDom(element)
+            chart?.resize()
+          }
+        }
+      })
+    }
 
     const fetchData = async () => {
       // 获取图表信息formData
@@ -163,9 +198,12 @@ export default defineComponent({
     }
 
     onMounted(() => {
+      initGrid()
       fetchData()
     })
     return {
+      grid,
+      items,
       ...toRefs(state)
     }
   }
@@ -173,5 +211,8 @@ export default defineComponent({
 </script>
 
 <style scoped>
-/* 这里可以添加组件的样式 */
+.grid-stack {
+  width: 100%;
+  height: 100%;
+}
 </style>
