@@ -134,16 +134,29 @@ export default defineComponent({
       formData: {}
     })
 
-    SupersetClient.configure({
-      baseUrl: 'http://localhost:8088',
-      mode: 'cors',
-      credentials: 'include'
-    })
-      .init()
-      .catch((error) =>
-        console.error('Error initializing SupersetClient:', error)
-      )
+    // 获取token及配置SupersetClient
+    const setSupersetClient = async () => {
+      const response = await fetch('/api/v1/security/csrf_token/')
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const data = await response.json()
+      SupersetClient.configure({
+        baseUrl: 'http://localhost:5173',
+        mode: 'cors',
+        credentials: 'include',
+        csrfToken: data?.result
+      })
+        .init()
+        .catch((error) =>
+          console.error('Error initializing SupersetClient:', error)
+        )
 
+      // 获取图表信息及数据
+      fetchData()
+    }
+
+    // 图表拖拽及缩放功能
     const grid = ref(null as GridStack | null)
     const items = ref([{ x: 0, y: 0, w: 6, h: 4 }])
     const initGrid = () => {
@@ -164,8 +177,9 @@ export default defineComponent({
       })
     }
 
+    // 获取图表信息及数据
     const fetchData = async () => {
-      // 获取图表信息formData
+      // 调用/api/v1/dashboard/1/charts接口获取formData
       const response = await SupersetClient.get({
         endpoint: '/api/v1/dashboard/1/charts'
       })
@@ -177,7 +191,7 @@ export default defineComponent({
       const { viz_type } = form_data
       state.chartType = viz_type
       state.formData = form_data
-      // 获取图表数据queriesData
+      // 调用/api/v1/chart/data?form_data接口获取queriesData
       const chartDataRequest = await getChartDataRequest({
         formData: form_data
       })
@@ -196,10 +210,11 @@ export default defineComponent({
         data
       )
     }
-
     onMounted(() => {
+      // 初始化gridstack
       initGrid()
-      fetchData()
+      // 获取token及配置SupersetClient
+      setSupersetClient()
     })
     return {
       grid,

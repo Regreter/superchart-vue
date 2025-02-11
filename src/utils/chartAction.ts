@@ -58,7 +58,7 @@ const v1ChartDataRequest = async (
   //   qs,
   //   allowDomainSharding,
   // }).toString();
-  const url = "http://localhost:8088/api/v1/chart/data?form_data=%7B%22slice_id%22%3A3%7D&dashboard_id=1";
+  const url = "/api/v1/chart/data?form_data=%7B%22slice_id%22%3A3%7D&dashboard_id=1";
 
   const querySettings = {
     ...requestParams,
