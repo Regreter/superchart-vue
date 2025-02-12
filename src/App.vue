@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Char :width="'100%'" :height="'100%'" />
+    <Char />
   </div>
 </template>
 <script setup>

@@ -1,7 +1,9 @@
 import { buildQueryContext, getChartBuildQueryRegistry, getChartMetadataRegistry, SupersetClient } from "@superset-ui/core";
+import URI from "urijs";
 
 export default async function getChartDataRequest({
   formData,
+  dashboardId,
   setDataMask = () => {},
   resultFormat = 'json',
   resultType = 'full',
@@ -15,6 +17,7 @@ export default async function getChartDataRequest({
   const [ parseMethod ] = getQuerySettings(formData);
   return v1ChartDataRequest(
     formData,
+    dashboardId,
     resultFormat,
     resultType,
     force,
@@ -25,8 +28,25 @@ export default async function getChartDataRequest({
   );
 }
 
+export function getChartDataUri({ path, qs, allowDomainSharding = false }) {
+  // The search params from the window.locxation are carried through,
+  // but can be specified with curUrl (used for unit tests to spoof
+  // the window.location).
+  let uri = new URI({
+    protocol: 'http',
+    hostname: window.location.hostname,
+    port: window.location.port ? window.location.port : '',
+    path,
+  });
+  if (qs) {
+    uri = uri.search(qs);
+  }
+  return uri;
+}
+
 const v1ChartDataRequest = async (
   formData,
+  dashboardId,
   resultFormat,
   resultType,
   force,
@@ -43,22 +63,18 @@ const v1ChartDataRequest = async (
     setDataMask,
     ownState,
   });
-
   // The dashboard id is added to query params for tracking purposes
   const { slice_id: sliceId } = formData;
-  const { dashboard_id: dashboardId } = requestParams;
 
   const qs = {} as any;
   if (sliceId !== undefined) qs.form_data = `{"slice_id":${sliceId}}`;
   if (dashboardId !== undefined) qs.dashboard_id = dashboardId;
   if (force) qs.force = force;
 
-  // const url = getChartDataUri({
-  //   path: '/api/v1/chart/data',
-  //   qs,
-  //   allowDomainSharding,
-  // }).toString();
-  const url = "/api/v1/chart/data?form_data=%7B%22slice_id%22%3A3%7D&dashboard_id=1";
+  const url = getChartDataUri({
+    path: '/api/v1/chart/data',
+    qs,
+  }).toString();
 
   const querySettings = {
     ...requestParams,

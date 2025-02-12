@@ -10,11 +10,11 @@
       <div class="grid-stack-item-content">
         <SuperChart
           :id="'chart-' + index"
-          :chartType="chartType"
+          :chartType="item.chartType"
           :width="width"
           :height="height"
-          :queriesData="queriesData"
-          :formData="formData"
+          :queriesData="item.queriesData"
+          :formData="item.formData"
         />
       </div>
     </div>
@@ -24,118 +24,29 @@
 <script lang="ts">
 import { defineComponent, onMounted, reactive, toRefs, ref } from 'vue'
 import SuperChart from '../../components/SuperChart.vue'
-import {
-  BigNumberChartPlugin,
-  BigNumberPeriodOverPeriodChartPlugin,
-  BigNumberTotalChartPlugin,
-  EchartsAreaChartPlugin,
-  EchartsBoxPlotChartPlugin,
-  EchartsBubbleChartPlugin,
-  EchartsFunnelChartPlugin,
-  EchartsGaugeChartPlugin,
-  EchartsGraphChartPlugin,
-  EchartsHeatmapChartPlugin,
-  EchartsHistogramChartPlugin,
-  EchartsMixedTimeseriesChartPlugin,
-  EchartsPieChartPlugin,
-  EchartsRadarChartPlugin,
-  EchartsSankeyChartPlugin,
-  EchartsSunburstChartPlugin,
-  EchartsTimeseriesBarChartPlugin,
-  EchartsTimeseriesChartPlugin,
-  EchartsTimeseriesLineChartPlugin,
-  EchartsTimeseriesScatterChartPlugin,
-  EchartsTimeseriesSmoothLineChartPlugin,
-  EchartsTimeseriesStepChartPlugin,
-  EchartsTreeChartPlugin,
-  EchartsTreemapChartPlugin,
-  EchartsWaterfallChartPlugin
-} from '@superset-ui/plugin-chart-echarts'
-import { DEFAULT_HEIGHT, DEFAULT_WIDTH } from '../../utils/content'
 import getChartDataRequest from '../../utils/chartAction'
 import { SupersetClient } from '@superset-ui/core'
 import { GridStack } from 'gridstack'
 import * as echarts from 'echarts'
-
-new EchartsBoxPlotChartPlugin().configure({ key: 'box_plot' }).register()
-new EchartsTimeseriesChartPlugin()
-  .configure({ key: 'echarts_timeseries' })
-  .register()
-new EchartsAreaChartPlugin().configure({ key: 'echarts_area' }).register()
-new EchartsTimeseriesBarChartPlugin()
-  .configure({ key: 'echarts_timeseries_bar' })
-  .register()
-new EchartsTimeseriesLineChartPlugin()
-  .configure({ key: 'echarts_timeseries_line' })
-  .register()
-new EchartsTimeseriesScatterChartPlugin()
-  .configure({ key: 'echarts_timeseries_scatter' })
-  .register()
-new EchartsTimeseriesSmoothLineChartPlugin()
-  .configure({
-    key: 'echarts_timeseries_smooth'
-  })
-  .register()
-new EchartsTimeseriesStepChartPlugin()
-  .configure({
-    key: 'echarts_timeseries_step'
-  })
-  .register()
-new EchartsMixedTimeseriesChartPlugin()
-  .configure({
-    key: 'mixed_timeseries'
-  })
-  .register()
-new EchartsPieChartPlugin().configure({ key: 'pie' }).register()
-new EchartsGraphChartPlugin().configure({ key: 'graph_chart' }).register()
-new EchartsGaugeChartPlugin().configure({ key: 'gauge_chart' }).register()
-new EchartsHistogramChartPlugin().configure({ key: 'histogram_v2' }).register()
-new EchartsRadarChartPlugin().configure({ key: 'radar' }).register()
-new EchartsFunnelChartPlugin().configure({ key: 'funnel' }).register()
-new EchartsTreeChartPlugin().configure({ key: 'tree' }).register()
-new EchartsHeatmapChartPlugin().configure({ key: 'heatmap_v2' }).register()
-new EchartsTreemapChartPlugin().configure({ key: 'treemap_v2' }).register()
-new BigNumberChartPlugin().configure({ key: 'big_number' }).register()
-new BigNumberTotalChartPlugin()
-  .configure({ key: 'big_number_total' })
-  .register()
-new BigNumberPeriodOverPeriodChartPlugin()
-  .configure({
-    key: 'pop_kpi'
-  })
-  .register()
-new EchartsSunburstChartPlugin().configure({ key: 'sunburst_v2' }).register()
-new EchartsBubbleChartPlugin().configure({ key: 'bubble_v2' }).register()
-new EchartsSankeyChartPlugin().configure({ key: 'sankey_v2' }).register()
-new EchartsWaterfallChartPlugin().configure({ key: 'waterfall' }).register()
 
 export default defineComponent({
   name: 'Char',
   components: {
     SuperChart
   },
-  props: {
-    width: {
-      type: String,
-      default: DEFAULT_WIDTH
-    },
-    height: {
-      type: String,
-      default: DEFAULT_HEIGHT
-    }
-  },
-  setup(props) {
-    const { width, height } = props
+  setup() {
     const state = reactive({
       chartType: '',
-      width,
-      height,
+      width: '100%',
+      height: '100%',
       queriesData: [] as any,
       formData: {}
     })
 
     // 获取token及配置SupersetClient
     const setSupersetClient = async () => {
+      document.cookie =
+        'session=.eJwtjktqAzEQBe-idRb9k1ryZQapPyTExDBjr4LvHi2yKl5BwfstR55xfZbb83zFRzm-vNwKEiaOlBwzBdZqmI7UVgyrm1575eF90xtBKi-oDMGwGg-1yKxTtQJ4NxoZmM2xB21jHWnO2W0RuiVzXQLJqF19ClMuFS_7yOuK8__NnnadeTwf3_GzhaRSJwYITcMWpjKEZXr1MUUd6wocYLu7P2zeYzc7fP8BWexDPQ.Z6v1lQ.Hv_uBNRzHkhzREBKMUJwrO8s2Fk'
       const response = await fetch('/api/v1/security/csrf_token/')
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -158,7 +69,11 @@ export default defineComponent({
 
     // 图表拖拽及缩放功能
     const grid = ref(null as GridStack | null)
-    const items = ref([{ x: 0, y: 0, w: 6, h: 4 }])
+    const items = reactive([
+      { x: 0, y: 0, w: 6, h: 4 },
+      { x: 0, y: 0, w: 6, h: 4 },
+      { x: 0, y: 0, w: 6, h: 4 }
+    ]) as any
     const initGrid = () => {
       grid.value = GridStack.init({
         float: true,
@@ -184,31 +99,32 @@ export default defineComponent({
         endpoint: '/api/v1/dashboard/1/charts'
       })
       const {
-        json: {
-          result: [{ form_data }]
-        }
+        json: { result }
       } = response
-      const { viz_type } = form_data
-      state.chartType = viz_type
-      state.formData = form_data
-      // 调用/api/v1/chart/data?form_data接口获取queriesData
-      const chartDataRequest = await getChartDataRequest({
-        formData: form_data
-      })
-      const {
-        json: {
-          result: [{ data }]
+      for (let i = 0; i < result.length; i++) {
+        const item = result[i]
+        const { viz_type } = item.form_data
+        // 调用/api/v1/chart/data?form_data接口获取queriesData
+        const chartDataRequest = await getChartDataRequest({
+          formData: item.form_data,
+          dashboardId: 1
+        })
+        const {
+          json: {
+            result: [{ data }]
+          }
+        } = chartDataRequest
+        items[i] = {
+          x: 0,
+          y: 0,
+          w: 6,
+          h: 4,
+          chartType: viz_type,
+          formData: item.form_data,
+          queriesData: [{ data }]
         }
-      } = chartDataRequest
-      state.queriesData = [{ data }]
-      console.log(
-        'viz_type:',
-        viz_type,
-        ';form_data:',
-        form_data,
-        ';data:',
-        data
-      )
+      }
+      console.log('items:', items)
     }
     onMounted(() => {
       // 初始化gridstack
