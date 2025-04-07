@@ -8,7 +8,21 @@
       :key="index"
     >
       <div class="grid-stack-item-content">
-        <SuperChart
+        <Filters ref="filtersRef" :filtersItems="filtersItems" />
+        <a-button @click="handleQuery(item, index)" type="primary"
+          >查询</a-button
+        >
+        <!-- <div v-for="(filter, index) in filtersItems" :key="index">
+          <SuperChartWrapper
+            v-if="filter.chartType"
+            :chartType="filter.chartType"
+            :width="filter.width"
+            :height="filter.height"
+            :queriesData="filter.queriesData"
+            :formData="filter.formData"
+          />
+        </div> -->
+        <SuperChartWrapper
           :id="'chart-' + index"
           :chartType="item.chartType"
           :width="width"
@@ -21,26 +35,68 @@
   </div>
 </template> 
 
-<script lang="ts">
+<script lang="tsx">
 import { defineComponent, onMounted, reactive, toRefs, ref } from 'vue'
-import SuperChart from '../../components/SuperChart.vue'
 import getChartDataRequest from '../../utils/chartAction'
-import { SupersetClient } from '@superset-ui/core'
+import { Filter, SupersetClient } from '@superset-ui/core'
 import { GridStack } from 'gridstack'
 import * as echarts from 'echarts'
+import SuperChartWrapper from './SuperChartWrapper.vue'
+import { getFormData } from '../../utils/nativeFilters'
+import Filters from '../../components/Filters.vue'
+// import { AntdSelectFilterPlugin } from '@superset-ui/plugin-filter-antd';
+// import { SelectFilterPlugin } from '../../filters/components';
+
+// new AntdSelectFilterPlugin().configure({ key: 'plugin-filter-select' }).register();
+// import {
+//   TimeFilterPlugin,
+//   SelectFilterPlugin
+// } from '../../components/filters/components'
+// new SelectFilterPlugin().configure({ key: 'filter_select' }).register();
+export interface Owner {
+  first_name?: string
+  id: number
+  last_name?: string
+  full_name?: string
+}
+export interface Role {
+  id: number
+  name: string
+}
+export interface Dashboard {
+  id: number
+  slug?: string | null
+  url: string
+  dashboard_title: string
+  thumbnail_url: string
+  published: boolean
+  css?: string | null
+  json_metadata?: string | null
+  position_json?: string | null
+  changed_by_name: string
+  changed_by: Owner
+  changed_on: string
+  charts: string[] // just chart names, unfortunately...
+  owners: Owner[]
+  roles: Role[]
+}
 
 export default defineComponent({
   name: 'Char',
   components: {
-    SuperChart
+    Filters,
+    SuperChartWrapper
   },
   setup() {
+    const filtersRef = ref<InstanceType<typeof Filters>[]>([])
     const state = reactive({
       chartType: '',
-      width: '100%',
-      height: '100%',
+      width: 400,
+      height: 300,
       queriesData: [] as any,
-      formData: {}
+      formData: {},
+      filters: [] as Filter[],
+      filtersItems: [] as any,
     })
 
     // 获取token及配置SupersetClient
@@ -71,8 +127,8 @@ export default defineComponent({
     const grid = ref(null as GridStack | null)
     const items = reactive([
       { x: 0, y: 0, w: 6, h: 4 },
-      { x: 0, y: 0, w: 6, h: 4 },
-      { x: 0, y: 0, w: 6, h: 4 }
+      // { x: 0, y: 0, w: 6, h: 4 },
+      // { x: 0, y: 0, w: 6, h: 4 }
     ]) as any
     const initGrid = () => {
       grid.value = GridStack.init({
@@ -94,6 +150,44 @@ export default defineComponent({
 
     // 获取图表信息及数据
     const fetchData = async () => {
+      // 调用/api/v1/dashboard/1接口获取filter配置
+      const useApiV1Resource = await fetch('/api/v1/dashboard/1')
+      const dashboard = await useApiV1Resource.json()
+      const { native_filter_configuration } = JSON.parse(
+        dashboard.result?.json_metadata
+      )
+      state.filters = native_filter_configuration.filter((e: any) => e.type !== 'DIVIDER')
+
+      state.filtersItems = state.filters.map(async (filter) => {
+        const { name, targets, filterType, adhoc_filters, time_range } = filter;
+        const [ target ] = targets;
+        const { datasetId,column = {} }: Partial<{ datasetId: number; column: { name?: string } }> = target;
+        const dependencies = {};
+        const { name: groupby } = column;
+        const dashboardId = 1;
+        const newFormData = getFormData({
+          ...filter,
+          datasetId,
+          dependencies,
+          groupby,
+          adhoc_filters,
+          time_range,
+          dashboardId,
+        });
+        const filterResponse = await getChartDataRequest({ formData: newFormData });
+        const { json: { result } } = filterResponse;
+        return {
+          formData: newFormData,
+          queriesData: result,
+          chartType: filterType,
+          width: 100,
+          height: 32,
+          name,
+        }
+      })
+      state.filtersItems = await Promise.all(state.filtersItems);
+      console.log('filtersItems:', state.filtersItems);
+
       // 调用/api/v1/dashboard/1/charts接口获取formData
       const response = await SupersetClient.get({
         endpoint: '/api/v1/dashboard/1/charts'
@@ -101,6 +195,8 @@ export default defineComponent({
       const {
         json: { result }
       } = response
+      console.log('result:', result);
+      
       for (let i = 0; i < result.length; i++) {
         const item = result[i]
         const { viz_type } = item.form_data
@@ -124,8 +220,24 @@ export default defineComponent({
           queriesData: [{ data }]
         }
       }
-      console.log('items:', items)
     }
+
+    const handleQuery = async (item: any, index: number) => {
+      item.formData.extra_form_data = {
+        filters: filtersRef.value[index].filters
+      }
+      const chartDataRequest = await getChartDataRequest({
+        formData: item.formData,
+        dashboardId: 1
+      })
+      const {
+        json: {
+          result: [{ data }]
+        }
+      } = chartDataRequest
+      items[index].queriesData = [{ data }]
+    }
+
     onMounted(() => {
       // 初始化gridstack
       initGrid()
@@ -133,9 +245,11 @@ export default defineComponent({
       setSupersetClient()
     })
     return {
+      filtersRef,
       grid,
       items,
-      ...toRefs(state)
+      ...toRefs(state),
+      handleQuery
     }
   }
 })

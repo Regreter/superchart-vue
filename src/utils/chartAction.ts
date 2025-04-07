@@ -1,9 +1,10 @@
 import { buildQueryContext, getChartBuildQueryRegistry, getChartMetadataRegistry, SupersetClient } from "@superset-ui/core";
+
 import URI from "urijs";
 
 export default async function getChartDataRequest({
   formData,
-  dashboardId,
+  dashboardId = undefined as  undefined | number,
   setDataMask = () => {},
   resultFormat = 'json',
   resultType = 'full',
@@ -83,7 +84,6 @@ const v1ChartDataRequest = async (
     body: JSON.stringify(payload),
     parseMethod,
   };
-
   return SupersetClient.post(querySettings);
 };
 
