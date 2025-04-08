@@ -1,5 +1,8 @@
 <template>
-  <div ref="reactRootRef"></div>
+  <div v-if="queriesData && queriesData[0]?.data?.length === 0">
+    {{ 'No results were returned for this query' }}
+  </div>
+  <div v-else ref="reactRootRef"></div>
 </template>
 
 <script lang="tsx">

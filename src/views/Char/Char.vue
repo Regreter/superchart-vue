@@ -1,18 +1,18 @@
 <template>
   <div class="grid-stack">
     <div
-      gs-w="6"
-      gs-h="4"
+      gs-w="8"
+      gs-h="6"
       class="grid-stack-item"
       v-for="(item, index) in items"
       :key="index"
     >
       <div class="grid-stack-item-content">
-        <Filters ref="filtersRef" :filtersItems="filtersItems" />
-        <a-button @click="handleQuery(item, index)" type="primary"
+        <Filters ref="filtersRef" :filterItems="filterItems" />
+        <a-button size="small" @click="handleQuery(item, index)" type="primary"
           >查询</a-button
         >
-        <!-- <div v-for="(filter, index) in filtersItems" :key="index">
+        <!-- <div v-for="(filter, index) in filterItems" :key="index">
           <SuperChartWrapper
             v-if="filter.chartType"
             :chartType="filter.chartType"
@@ -91,12 +91,12 @@ export default defineComponent({
     const filtersRef = ref<InstanceType<typeof Filters>[]>([])
     const state = reactive({
       chartType: '',
-      width: 400,
-      height: 300,
+      width: 500,
+      height: 400,
       queriesData: [] as any,
       formData: {},
       filters: [] as Filter[],
-      filtersItems: [] as any,
+      filterItems: [] as any,
     })
 
     // 获取token及配置SupersetClient
@@ -158,7 +158,7 @@ export default defineComponent({
       )
       state.filters = native_filter_configuration.filter((e: any) => e.type !== 'DIVIDER')
 
-      state.filtersItems = state.filters.map(async (filter) => {
+      state.filterItems = state.filters.map(async (filter) => {
         const { name, targets, filterType, adhoc_filters, time_range } = filter;
         const [ target ] = targets;
         const { datasetId,column = {} }: Partial<{ datasetId: number; column: { name?: string } }> = target;
@@ -185,8 +185,8 @@ export default defineComponent({
           name,
         }
       })
-      state.filtersItems = await Promise.all(state.filtersItems);
-      console.log('filtersItems:', state.filtersItems);
+      state.filterItems = await Promise.all(state.filterItems);
+      console.log('filterItems:', state.filterItems);
 
       // 调用/api/v1/dashboard/1/charts接口获取formData
       const response = await SupersetClient.get({

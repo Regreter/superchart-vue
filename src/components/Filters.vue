@@ -1,37 +1,31 @@
 <template>
-  <div>
-    <div v-for="(filter, index) in filtersItems" :key="index">
-      <FilterSelect
-        ref="filterSelectRefs"
-        v-if="filter.chartType && filter.chartType === 'filter_select'"
+  <div class="filter-item">
+    <div v-for="(filter, index) in filterItems" :key="index">
+      <label>{{ filter.name }}:</label>
+      <FilterItem
+        ref="filterItemRefs"
+        v-if="filter.chartType"
         :chartType="filter.chartType"
-        :width="filter.width"
-        :height="filter.height"
         :queriesData="filter.queriesData[0]"
-        :formData="filter.formData"
-        :name="filter.name"
       />
     </div>
   </div>
 </template>
 <script lang="ts">
 import { defineComponent, ref, defineExpose, computed } from 'vue'
-import FilterSelect from './FilterSelect.vue'
+import FilterItem from './FilterItem.vue'
 
 export default defineComponent({
   components: {
-    FilterSelect
+    FilterItem
   },
   props: {
-    filtersItems: Array as any
+    filterItems: Array as any
   },
   setup() {
-    const filterSelectRefs = ref<InstanceType<typeof FilterSelect>[]>([])
-
+    const filterItemRefs = ref<InstanceType<typeof FilterItem>[]>([])
     const filters = computed(() => {
-      return filterSelectRefs.value
-        ?.filter((m) => m.selectValue.length > 0)
-        .map((e) => e.filter)
+      return filterItemRefs.value.map((e) => e.filter).flat()
     })
 
     defineExpose({
@@ -39,9 +33,14 @@ export default defineComponent({
     })
 
     return {
-      filterSelectRefs,
+      filterItemRefs,
       filters
     }
   }
 })
 </script>
+<style lang="css" scoped>
+.filter-item {
+  /* display: inline-flex; */
+}
+</style>
