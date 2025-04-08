@@ -12,16 +12,6 @@
         <a-button size="small" @click="handleQuery(item, index)" type="primary"
           >查询</a-button
         >
-        <!-- <div v-for="(filter, index) in filterItems" :key="index">
-          <SuperChartWrapper
-            v-if="filter.chartType"
-            :chartType="filter.chartType"
-            :width="filter.width"
-            :height="filter.height"
-            :queriesData="filter.queriesData"
-            :formData="filter.formData"
-          />
-        </div> -->
         <SuperChartWrapper
           :id="'chart-' + index"
           :chartType="item.chartType"
@@ -44,15 +34,6 @@ import * as echarts from 'echarts'
 import SuperChartWrapper from './SuperChartWrapper.vue'
 import { getFormData } from '../../utils/nativeFilters'
 import Filters from '../../components/Filters.vue'
-// import { AntdSelectFilterPlugin } from '@superset-ui/plugin-filter-antd';
-// import { SelectFilterPlugin } from '../../filters/components';
-
-// new AntdSelectFilterPlugin().configure({ key: 'plugin-filter-select' }).register();
-// import {
-//   TimeFilterPlugin,
-//   SelectFilterPlugin
-// } from '../../components/filters/components'
-// new SelectFilterPlugin().configure({ key: 'filter_select' }).register();
 export interface Owner {
   first_name?: string
   id: number

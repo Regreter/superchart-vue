@@ -7,6 +7,7 @@
         v-if="filter.chartType"
         :chartType="filter.chartType"
         :queriesData="filter.queriesData[0]"
+        :formData="filter.formData"
       />
     </div>
   </div>

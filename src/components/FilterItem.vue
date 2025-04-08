@@ -18,7 +18,10 @@
     </a-select>
     <a-slider
       v-else-if="chartType === 'filter_range'"
+      style="width: 200px"
       v-model:value="sliderValue"
+      :min="queriesData.data[0].min"
+      :max="queriesData.data[0].max"
       range
     />
   </div>
@@ -29,12 +32,12 @@ import { defineComponent, ref, defineExpose, computed } from 'vue'
 export default defineComponent({
   props: {
     chartType: String,
-    queriesData: Array as any
+    queriesData: Array as any,
+    formData: Object
   },
   setup(props) {
     const selectValue = ref([])
     const sliderValue = ref()
-
     const filter = computed(() => {
       if (props.chartType === 'filter_select') {
         return selectValue.value.length > 0
@@ -47,18 +50,20 @@ export default defineComponent({
             ]
           : []
       } else if (props.chartType === 'filter_range') {
-        return [
-          {
-            col: props.queriesData.colnames[0],
-            op: '>=',
-            val: sliderValue.value[0]
-          },
-          {
-            col: props.queriesData.colnames[0],
-            op: '<=',
-            val: sliderValue.value[1]
-          }
-        ]
+        return sliderValue.value
+          ? [
+              {
+                col: props.formData?.groupby[0],
+                op: '>=',
+                val: sliderValue.value[0]
+              },
+              {
+                col: props.formData?.groupby[0],
+                op: '<=',
+                val: sliderValue.value[1]
+              }
+            ]
+          : []
       }
       return []
     })

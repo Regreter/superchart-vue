@@ -1,6 +1,7 @@
 import { buildQueryContext, getChartBuildQueryRegistry, getChartMetadataRegistry, SupersetClient } from "@superset-ui/core";
 
 import URI from "urijs";
+import { rangeBuildQuery, selectBuildQuery } from "./buildQuery";
 
 export default async function getChartDataRequest({
   formData,
@@ -15,7 +16,7 @@ export default async function getChartDataRequest({
   let querySettings = {
     ...requestParams,
   };
-  const [ parseMethod ] = getQuerySettings(formData);
+  const [useLegacyApi, parseMethod] = getQuerySettings(formData);
   return v1ChartDataRequest(
     formData,
     dashboardId,
@@ -94,7 +95,7 @@ const getQuerySettings = formData => {
   ];
 };
 
-const buildV1ChartDataPayload = ({
+export const buildV1ChartDataPayload = ({
   formData,
   force,
   resultFormat,
@@ -102,6 +103,22 @@ const buildV1ChartDataPayload = ({
   setDataMask,
   ownState,
 }) => {
+  if (formData.viz_type === 'filter_range') {
+    return rangeBuildQuery(formData)
+  } else if (formData.viz_type === 'filter_select') {
+    return selectBuildQuery({
+      ...formData,
+      force,
+      result_format: resultFormat,
+      result_type: resultType,
+    },
+    {
+      ownState,
+      hooks: {
+        setDataMask,
+      },
+    },)
+  }
   const buildQuery =
     getChartBuildQueryRegistry().get(formData.viz_type) ??
     (buildQueryformData =>
@@ -109,7 +126,7 @@ const buildV1ChartDataPayload = ({
         {
           ...baseQueryObject,
         },
-      ])) as any;
+      ]));
   return buildQuery(
     {
       ...formData,
