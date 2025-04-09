@@ -29,6 +29,7 @@
       size="small"
       style="width: 250px"
       v-model:value="dateValue"
+      @change="onChangeDate"
     />
   </div>
 </template>
@@ -76,11 +77,16 @@ export default defineComponent({
       return []
     })
 
-    const time_range = computed(() => {
-      return `${dayjs(dateValue.value[0]).format(
-        'YYYY-MM-DD HH:mm:ss'
-      )} : ${dayjs(dateValue.value[1]).format('YYYY-MM-DD HH:mm:ss')}`
-    })
+    const time_range = ref()
+    const onChangeDate = (value: any) => {
+      if (value && value.length > 0) {
+        time_range.value = `${dayjs(dateValue.value[0]).format(
+          'YYYY-MM-DD HH:mm:ss'
+        )} : ${dayjs(dateValue.value[1]).format('YYYY-MM-DD HH:mm:ss')}`
+      } else {
+        time_range.value = ''
+      }
+    }
 
     defineExpose(
       props.chartType === 'filter_time' ? { time_range } : { filter }
@@ -91,7 +97,8 @@ export default defineComponent({
       sliderValue,
       dateValue,
       filter,
-      time_range
+      time_range,
+      onChangeDate
     }
   }
 })

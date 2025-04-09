@@ -33,7 +33,7 @@ export default defineComponent({
     })
     const time_range = computed(() => {
       return filterItemRefs.value
-        .filter((e) => e.chartType === 'filter_time')
+        .filter((e) => e.chartType === 'filter_time' || e.time_range === '')
         .map((m) => m.time_range)[0]
     })
 
