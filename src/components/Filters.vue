@@ -1,7 +1,10 @@
 <template>
-  <div class="filter-item">
-    <div v-for="(filter, index) in filterItems" :key="index">
-      <label>{{ filter.name }}:</label>
+  <a-form layout="inline">
+    <a-form-item
+      v-for="(filter, index) in filterItems"
+      :key="index"
+      :label="filter.name"
+    >
       <FilterItem
         ref="filterItemRefs"
         v-if="filter.chartType"
@@ -9,8 +12,8 @@
         :queriesData="filter.queriesData[0]"
         :formData="filter.formData"
       />
-    </div>
-  </div>
+    </a-form-item>
+  </a-form>
 </template>
 <script lang="ts">
 import { defineComponent, ref, defineExpose, computed } from 'vue'
@@ -26,22 +29,29 @@ export default defineComponent({
   setup() {
     const filterItemRefs = ref<InstanceType<typeof FilterItem>[]>([])
     const filters = computed(() => {
-      return filterItemRefs.value.map((e) => e.filter).flat()
+      return filterItemRefs.value.map((e) => e?.filter).flat()
+    })
+    const time_range = computed(() => {
+      return filterItemRefs.value
+        .filter((e) => e.chartType === 'filter_time')
+        .map((m) => m.time_range)[0]
     })
 
     defineExpose({
-      filters
+      filters,
+      time_range
     })
 
     return {
       filterItemRefs,
-      filters
+      filters,
+      time_range
     }
   }
 })
 </script>
-<style lang="css" scoped>
-.filter-item {
-  /* display: inline-flex; */
+<style scoped>
+:deep(.ant-form-item-label > label) {
+  width: 70px !important;
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
   <div class="grid-stack">
     <div
-      gs-w="8"
+      gs-w="10"
       gs-h="6"
       class="grid-stack-item"
       v-for="(item, index) in items"
@@ -72,7 +72,7 @@ export default defineComponent({
     const filtersRef = ref<InstanceType<typeof Filters>[]>([])
     const state = reactive({
       chartType: '',
-      width: 500,
+      width: 600,
       height: 400,
       queriesData: [] as any,
       formData: {},
@@ -138,14 +138,15 @@ export default defineComponent({
         dashboard.result?.json_metadata
       )
       state.filters = native_filter_configuration.filter((e: any) => e.type !== 'DIVIDER')
-
       state.filterItems = state.filters.map(async (filter) => {
         const { name, targets, filterType, adhoc_filters, time_range } = filter;
         const [ target ] = targets;
-        const { datasetId,column = {} }: Partial<{ datasetId: number; column: { name?: string } }> = target;
+        const { datasetId, column = {} }: Partial<{ datasetId: number; column: { name?: string } }> = target;
+        const hasDataSource = !!datasetId;
         const dependencies = {};
         const { name: groupby } = column;
         const dashboardId = 1;
+        const queriesDataPlaceholder = [{ data: [{}] }];
         const newFormData = getFormData({
           ...filter,
           datasetId,
@@ -155,6 +156,16 @@ export default defineComponent({
           time_range,
           dashboardId,
         });
+        if (!hasDataSource) {
+          return {
+            formData: newFormData,
+            queriesData: queriesDataPlaceholder,
+            chartType: filterType,
+            width: 100,
+            height: 32,
+            name,
+          }
+        }
         const filterResponse = await getChartDataRequest({ formData: newFormData });
         const { json: { result } } = filterResponse;
         return {
@@ -205,7 +216,8 @@ export default defineComponent({
 
     const handleQuery = async (item: any, index: number) => {
       item.formData.extra_form_data = {
-        filters: filtersRef.value[index].filters
+        filters: filtersRef.value[index].filters,
+        time_range: filtersRef.value[index].time_range
       }
       const chartDataRequest = await getChartDataRequest({
         formData: item.formData,
